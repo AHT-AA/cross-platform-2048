@@ -28,7 +28,7 @@ int main(void)
 		draw_game_table();
 		printf("Use arrow key to move numbers '%c' to show keys: ", HELPKEY);
 		#ifndef __unix__
-		if((ch = getch()) == 0)
+		if((ch = getch()) == CONTROL)
 		{
 			switch(getch())
 			{
@@ -53,7 +53,7 @@ int main(void)
 		#else
 		if((ch = getch()) == CONTROL)
 		{
-			if((ch = getch()) == ARROW2)
+			if((ch = getch()) == ARROW)
 			{
 				switch(getch())
 				{

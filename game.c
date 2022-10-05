@@ -365,9 +365,9 @@ void move(int index) /* index can be: UP, DOWN, RIGHT, LEFT */
 		}
 	}
 	compile(index);
+	is_gameover();
 	if(flag == 1)
 	{
 		create_random();
 	}
-	is_gameover();
 }

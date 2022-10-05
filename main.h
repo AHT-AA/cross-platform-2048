@@ -31,6 +31,11 @@
 
 /* Key defines */
 #ifndef __unix__
+	#ifdef __MSDOS__
+		#define CONTROL 0
+	#else
+		#define CONTROL (-32)
+	#endif
 	#define UP 72
 	#define DOWN 80
 	#define RIGHT 77
@@ -38,7 +43,7 @@
 
 #else
 	#define CONTROL 27
-	#define ARROW2 91
+	#define ARROW 91
 	#define UP 'A'
 	#define DOWN 'B'
 	#define RIGHT 'C'
