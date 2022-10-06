@@ -94,9 +94,20 @@ void is_gameover(void)
 	}
 	if(is_find == 0) /* if it full */
 	{
+		for(x = 0; x < size-1; x++)
+		{
+			for(y = 0; y < size-1; y++)
+			{
+				if(game_table[x][y] == game_table[x+1][y] || game_table[x][y] == game_table[x][y+1])
+					is_find = 1;
+			}
+		}
+	}
+	if(is_find == 0)
+	{
 		if(is_hscr() != 0)
 			put_hscr();
-		game_exit("Game over BYEBYE!");
+		game_exit("Game over BYE!");
 	}
 }
 

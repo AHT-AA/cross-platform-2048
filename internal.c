@@ -54,7 +54,7 @@ unsigned find_digit_number(unsigned long number)
 	unsigned digit = 1;
 	while(number >= 10)
 	{
-		number %= 10;
+		number /= 10;
 		digit++;
 	}
 	return digit;
@@ -95,18 +95,18 @@ unsigned long get_random(void)
 		return numb;
 	#elif defined __unix__
 		#define SEC_TO_NS(sec) ((sec)*1000000000)
-		static uint64_t nanoseconds, i = 765775345;
+		static uint64_t nanoseconds, i = 0;
 		struct timespec ts;
 		clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
-		nanoseconds += (SEC_TO_NS((uint64_t)ts.tv_sec) + (uint64_t)ts.tv_nsec) * ++i;
+		nanoseconds += (SEC_TO_NS((uint64_t)ts.tv_sec) + (uint64_t)ts.tv_nsec) + i++;
 		nanoseconds *= ++i;
 		return nanoseconds;
 	#elif defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
-		static unsigned long i;
+		static unsigned long i = 0;
 		SYSTEMTIME st;
 		GetSystemTime(&st);
-		st.wMilliseconds += ++i * ++i;
-		return st.wMilliseconds;
+		st.wMilliseconds += ++i;
+		return st.wMilliseconds + st.wSecond;
 	#endif
 }
 
