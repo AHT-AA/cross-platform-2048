@@ -93,6 +93,16 @@ extern HIGHSCORE **hscr;
 extern unsigned long **game_table; /* game_table[x][y] */
 extern unsigned size;
 
+/* gui.c */
+#if defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
+
+#define BACKGROUND_COLOR (RGB(0, 0, 128))
+
+extern unsigned X, Y;
+extern HWND hWnd;
+extern HFONT hFont;
+#endif
+
 /* Function prototypes */
 
 /* main.c */
@@ -119,6 +129,14 @@ void delete_game_table(void); /* delete game table */
 #ifdef __unix__
 	char getch(void);
 #endif
+#if defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
+	VOID ExitSys(LPCSTR lpszMsg);
+	VOID __putnumb(UINT x, UINT y, INT numb, COLORREF text_color, COLORREF bk_color); /* Print number on window */
+	VOID __putch(UINT x, UINT y, CHAR ch, COLORREF text_color, COLORREF bk_color);
+	VOID __putstr(UINT x, UINT y, LPCSTR lpszText, COLORREF text_color, COLORREF bk_color);
+	BOOL CALLBACK SetFont(HWND child, LPARAM font);
+	VOID ClearScreen(VOID);
+#endif
 void clrscr();
 unsigned find_digit_number(unsigned long number); /* Find how many digits of number (decimal) */
 void set_tinfo(void);
@@ -135,5 +153,20 @@ HIGHSCORE **queue_hscr(void); /* sirala nin ingilizcesi ne dayi */
 HIGHSCORE **get_hscr(void);
 void put_hscr(void);
 void show_hscr(void); /* show highscore */
+
+/* gui.c */
+#if defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
+UINT FindCountOfhChild(HWND hWnd);
+VOID ClearChildWindows(VOID);
+VOID SaveGame(VOID);
+VOID LoadGame(VOID);
+VOID ShowHighScore(VOID);
+VOID PutHighScore(VOID);
+VOID Restart(VOID);
+VOID Exit(VOID);
+VOID NewGame(VOID);
+VOID DrawBlocks(VOID);
+VOID GuiInit(VOID);
+#endif
 
 #endif /* _2048_H_ */

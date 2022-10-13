@@ -107,7 +107,9 @@ void is_gameover(void)
 	{
 		if(is_hscr() != 0)
 			put_hscr();
+		#if !( __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64)
 		game_exit("Game over BYE!");
+		#endif
 	}
 }
 

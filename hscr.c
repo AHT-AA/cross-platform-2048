@@ -56,7 +56,7 @@ HIGHSCORE **get_hscr(void)
 		DeleteArray((void**) hscr, hscr_number, sizeof(HIGHSCORE));
 	hscr = (HIGHSCORE**) CreateArray(hscr_number, sizeof(HIGHSCORE)); /* Create an array element number: line number of file, size of element is size of HIGHSCORE data type */
 
-	if((f = fopen(HSCR_FILENAME, "r")) == NULL || hscr == NULL) /* If file is not exist then it is highscore */
+	if((f = fopen(HSCR_FILENAME, "rb")) == NULL || hscr == NULL) /* If file is not exist then it is highscore */
 	{
 		return NULL;
 	}
@@ -78,28 +78,32 @@ HIGHSCORE **get_hscr(void)
 
 void put_hscr(void)
 {
-	FILE *f;
-	char buff[16];
-	printf("\nCongratulations! %lu is your score. Type your name (max 16 char): ", get_biggest());
-	#ifndef __unix__
-		fflush(stdin);
+	#if defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
+		PutHighScore();
 	#else
-		for(char ch = 0; (ch = getchar()) != '\n' && ch != '\0' && ch != EOF; )
-			;
-	#endif
-	fgets(buff, 16, stdin);
-	buff[strlen(buff)-1] = '\0';
+		FILE *f;
+		char buff[16];
+		printf("\nCongratulations! %lu is your score. Type your name (max 16 char): ", get_biggest());
+		#ifndef __unix__
+			fflush(stdin);
+		#else
+			for(char ch = 0; (ch = getchar()) != '\n' && ch != '\0' && ch != EOF; )
+				;
+		#endif
+		fgets(buff, 16, stdin);
+		buff[strlen(buff)-1] = '\0';
 
-	f = fopen(HSCR_FILENAME, "ab");
-	if(f == NULL)
-	{
-		printf("\nHigh score file can't open. Press any key to continue . . .\n");
-		getch();
-		return ;
-	}
-	set_tinfo();
-	fprintf(f, "%c %u %lu %d %d %d %d %d %s%c", HSCR_SIGNATURE, size, get_biggest(), tinfo->tm_min, tinfo->tm_hour, tinfo->tm_mday, tinfo->tm_mon, tinfo->tm_year, buff, 0x0a);
-	fclose(f);
+		f = fopen(HSCR_FILENAME, "ab");
+		if(f == NULL)
+		{
+			printf("\nHigh score file can't open. Press any key to continue . . .\n");
+			getch();
+			return ;
+		}
+		set_tinfo();
+		fprintf(f, "%c %u %lu %d %d %d %d %d %s%c", HSCR_SIGNATURE, size, get_biggest(), tinfo->tm_min, tinfo->tm_hour, tinfo->tm_mday, tinfo->tm_mon, tinfo->tm_year, buff, 0x0a);
+		fclose(f);
+	#endif
 }
 
 void show_hscr(void)
@@ -107,6 +111,7 @@ void show_hscr(void)
 	int i = 0;
 	if(get_hscr() == NULL)
 		return ;
+	queue_hscr();
 	printf("\n");
 	for(i = 0; i < hscr_number-1; i++)
 	{

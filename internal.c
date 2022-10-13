@@ -11,6 +11,80 @@
 
 struct tm *tinfo = NULL;
 
+#if defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
+
+VOID ExitSys(LPCSTR lpszMsg)
+{
+	DWORD dwLastError = GetLastError();
+	LPTSTR lpszErr;
+	if(FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpszErr, 0, NULL))
+	{
+		MessageBox(NULL, lpszErr, lpszMsg, MB_OK | MB_ICONEXCLAMATION);
+		LocalFree(lpszErr);
+	}
+	ExitProcess(dwLastError);
+}
+
+VOID __putnumb(UINT x, UINT y, INT numb, COLORREF text_color, COLORREF bk_color)
+{
+	LPSTR lpszBuff = (LPSTR) calloc(sizeof(CHAR), 16);
+	itoa(numb, lpszBuff, 10);
+	__putstr(x, y, lpszBuff, text_color, bk_color);
+	free(lpszBuff);
+}
+
+VOID __putch(UINT x, UINT y, CHAR ch, COLORREF text_color, COLORREF bk_color)
+{
+	HDC hDc = GetDC(hWnd);
+
+	CHAR lpszTempBuff[2] = {0};
+	lpszTempBuff[0] = ch;
+
+	SetTextColor(hDc, text_color);
+	SetBkColor(hDc, bk_color);
+
+	TextOut(hDc, x, y, lpszTempBuff, 1);
+}
+
+VOID __putstr(UINT x, UINT y, LPCSTR lpszText, COLORREF text_color, COLORREF bk_color)
+{
+	HDC hDc = GetDC(hWnd);
+
+	SelectObject(hDc, hFont);
+
+	if(text_color != 0)
+		SetTextColor(hDc, text_color);
+	if(bk_color != 0)
+		SetBkColor(hDc, bk_color);
+	TextOut(hDc, x, y, lpszText, strlen(lpszText));
+
+	ReleaseDC(hWnd, hDc);
+}
+
+BOOL CALLBACK SetFont(HWND child, LPARAM font)
+{
+  SendMessage(child, WM_SETFONT, font, TRUE);
+
+  return TRUE;
+}
+
+VOID ClearScreen(VOID)
+{
+	HDC hDc = GetDC(hWnd);
+	HBRUSH hBrush = CreateSolidBrush(BACKGROUND_COLOR);
+	HPEN hPen = CreatePen(PS_SOLID, 0, BACKGROUND_COLOR);
+
+	SelectObject(hDc, hPen);
+	SelectObject(hDc, hBrush);
+
+	Rectangle(hDc, 0, 0, X, Y);
+
+	DeleteObject(hBrush);
+	DeleteObject(hPen);
+}
+
+#endif
+
 #ifdef __unix__
 
 char getch(void)
