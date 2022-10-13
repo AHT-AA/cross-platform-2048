@@ -1,5 +1,5 @@
 # cross-platform-2048
-Console based 2048 game for Linux, Windows, and DOS
+GUI-Console (Windows GUI, Linux, Dos Console) based 2048 game for Linux, Windows, and DOS
 
 To build this project:
 
