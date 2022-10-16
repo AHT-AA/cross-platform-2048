@@ -1,9 +1,9 @@
 /*
-	Name: hscr.c
+	Name: gui.c
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 07.10.2022 19.20
-	Modify date: 07.10.2022 19.20
+	Modify date: 15.10.2022 21.47
 	Description: Windows gui for 2048
 */
 
@@ -15,13 +15,38 @@
 #define MidScreenY(Y) ((GetSystemMetrics(SM_CYSCREEN) - Y) / 2)
 
 #define TOTAL_MENU_NUMBER  3
-#define MAX_CHILD_WINDOWS 100
 
 #define GAME_BUTTON_NUMBER 5
 
 unsigned X = 400, Y = 300;
 
+BOOL GameOver = FALSE;
+
 const unsigned BlockSize[7] = {140, 110, 85, 72, 60, 55, 50}; /* BlockSize[size-3] */
+
+const COLORREF BlockColors[20] =
+{
+	RGB(0x00, 0x96, 0xFF),
+	RGB(0xF1, 0x55, 0xa4),
+	RGB(0x00, 0x32, 0xc3),
+	RGB(0x00, 0xcf, 0xff),
+	RGB(0xff, 0xbf, 0x00),
+	RGB(0xcd, 0x42, 0xf8),
+	RGB(0x00, 0xd4, 0xff),
+	RGB(0xfb, 0xe3, 0xff),
+	RGB(0x00, 0x65, 0x79),
+	RGB(0xff, 0x00, 0x20),
+	RGB(0x1a, 0x29, 0x4f),
+	RGB(0xdb, 0x00, 0x00),
+	RGB(0x85, 0x5a, 0x3c),
+	RGB(0x91, 0xc6, 0x9c),
+	RGB(0xe7, 0x76, 0x1f),
+	RGB(0x10, 0x00, 0x7a),
+	RGB(0x00, 0xa5, 0xff),
+	RGB(0x73, 0x34, 0xd6),
+	RGB(0x83, 0xce, 0x6e),
+	RGB(0x0b, 0x68, 0x7a),
+};
 
 LPCSTR lpszClassName = "WINDOWS2048GAMECLASSNAME";
 HINSTANCE hInstance = NULL;
@@ -31,6 +56,8 @@ HFONT hFont = NULL, hBigFont = NULL;
 HWND hChildWnd[MAX_CHILD_WINDOWS] = {NULL};
 
 BOOL ActiveMenu = 0; /* 0 Main menu, 1 Game menu, 2 Ask size menu */
+
+UINT CurX, CurY; /* For play using mouse */
 
 UINT FindCountOfhChild(HWND hWnd)
 {
@@ -122,15 +149,22 @@ VOID LoadGame(VOID)
 
 VOID ShowHighScore(VOID)
 {
-	char buff[256 * HSCR_NUMBER] = {'\0'};
 	if(get_hscr() != NULL)
+	{
 		if(queue_hscr() != NULL)
 		{
+			char *buff = calloc(256, hscr_number);
+			if(buff == NULL)
+				game_exit("Not enought memory.");
 			int i = 0;
-			for(i = 0; i < hscr_number-1; i++)
+			for(i = 0; i < hscr_number; i++)
 				sprintf( (buff + strlen(buff)), "size: %u,  score: %lu,  date: %02d.%02d.%04d,  time: %02d.%02d,  name: %s\n", hscr[i]->size, hscr[i]->record, hscr[i]->time.tm_mday, hscr[i]->time.tm_mon, hscr[i]->time.tm_year, hscr[i]->time.tm_hour, hscr[i]->time.tm_min, hscr[i]->name);
 			MessageBox(hWnd, buff, "High Score", MB_OK | MB_ICONINFORMATION);
+			free(buff);
 		}
+	}
+	else
+		MessageBox(hWnd, "High score can't show.", strerror(errno), MB_OK | MB_ICONWARNING);
 }
 
 VOID Restart(VOID)
@@ -138,7 +172,7 @@ VOID Restart(VOID)
 	delete_game_table();
 	create_game_table();
 	create_random();
-	SendMessage(hWnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
+	SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
 }
 
 VOID PutHighScore(VOID)
@@ -177,7 +211,7 @@ VOID DrawBlocks(VOID)
 	for(x = 0; x < size; x++)
 		for(y = 0; y < size; y++)
 		{
-			HBRUSH hBrush = game_table[x][y] == 0 ? CreateSolidBrush(RGB(128, 128, 128)) : CreateSolidBrush(RGB(0, 255, 0));
+			HBRUSH hBrush = game_table[x][y] == 0 ? CreateSolidBrush(RGB(128, 128, 128)) : CreateSolidBrush(BlockColors[(int)log2(game_table[x][y]) % 20]);
 			SelectObject(hDc, hBrush);
 
 			Rectangle(hDc, BlckSz*x, BlckSz*y, BlckSz*(x+1), BlckSz*(y+1));
@@ -186,7 +220,7 @@ VOID DrawBlocks(VOID)
 
 			if(game_table[x][y] != 0)
 			{
-				__putnumb(BlckSz*x + (BlckSz/2 - find_digit_number(game_table[x][y])*4 - 3 ), BlckSz*y + (BlckSz-21)/2, (INT) game_table[x][y], RGB(255, 255, 255), RGB(0, 255, 0));
+				__putnumb(BlckSz*x + (BlckSz/2 - find_digit_number(game_table[x][y])*4 - 3 ), BlckSz*y + (BlckSz-21)/2, (INT) game_table[x][y], RGB(255, 255, 255), BlockColors[(int)log2(game_table[x][y]) % 20]);
 			}
 		}
 
@@ -230,12 +264,13 @@ LRESULT CALLBACK GameProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch(msg)
 	{
 		case WM_CREATE:
+			GameOver = FALSE;
 			SendMessage(hWnd, WM_SETFONT,(WPARAM)hFont, TRUE);
 			MoveWindow(hWnd, MidScreenX(X), MidScreenY(Y), X, Y, TRUE);
 			ClearChildWindows();
 
 			{
-				char *ButtonTexts[GAME_BUTTON_NUMBER] = {"Save Game", "Load Game", "Show High Scores", "Restar", "Return Main Menu"};
+				char *ButtonTexts[GAME_BUTTON_NUMBER] = {"Save Game", "Load Game", "Show High Scores", "Restart", "Return Main Menu"};
 				int i = 0;
 				for(i = 0; i < GAME_BUTTON_NUMBER; i++)
 					hChildWnd[i] = CreateWindow("BUTTON", ButtonTexts[i], WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, 500, 40+i*60, 130, 50, hWnd, (HMENU) 0, NULL, NULL);
@@ -249,12 +284,12 @@ LRESULT CALLBACK GameProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_COMMAND:
 		{
 			UINT uWndCount = FindCountOfhChild((HWND) lParam);
-			if(uWndCount < GAME_BUTTON_NUMBER && uWndCount > 0)
+			if(uWndCount < GAME_BUTTON_NUMBER && uWndCount >= 0)
 			{
 				ButtonProcs[uWndCount] ();
 				SetFocus(hWnd);
 			}
-			else if((HWND) lParam == hChildWnd[GAME_BUTTON_NUMBER+1]) /* Ok button on highscore */
+			else if(hChildWnd[GAME_BUTTON_NUMBER+1] != NULL && (HWND) lParam == hChildWnd[GAME_BUTTON_NUMBER+1]) /* Ok button on highscore */
 			{
 				CHAR name[16] = {0};
 				GetWindowText(hChildWnd[GAME_BUTTON_NUMBER], name, 16);
@@ -284,23 +319,49 @@ LRESULT CALLBACK GameProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_PAINT:
 			DrawBlocks();
 		break;
-		case WM_KEYUP:
-			switch((int)wParam)
+		case WM_LBUTTONDOWN:
+			CurX = LOWORD(lParam);
+			CurY = HIWORD(lParam);
+		break;
+		case WM_LBUTTONUP:
+		{
+			UINT tempX = LOWORD(lParam), tempY = HIWORD(lParam);
+			if(GameOver == FALSE)
 			{
-				case VK_UP:
-					move(UP);
-				break;
-				case VK_DOWN:
-					move(DOWN);
-				break;
-				case VK_RIGHT:
+				if((tempX >= CurX-20 && tempX <= CurX+20) && (tempY >= CurY-20 && tempY <= CurY+20)) /* Nothing */
+					break;
+				else if(tempX > CurX && (abs(tempX - CurX) >= abs(tempY - CurY)) ) /* Right */
 					move(RIGHT);
-				break;
-				case VK_LEFT:
+				else if(tempX < CurX && (abs(tempX - CurX) >= abs(tempY - CurY)) ) /* Left */
 					move(LEFT);
-				break;
+				else if(tempY > CurY && (abs(tempY - CurY) >= abs(tempX - CurX)) ) /* Down */
+					move(DOWN);
+				else if(tempY < CurY && (abs(tempY - CurY) >= abs(tempX - CurX)) ) /* Up */
+					move(UP);
+				SendMessage(hWnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
 			}
-			SendMessage(hWnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
+		}
+		break;
+		case WM_KEYUP:
+			if(GameOver == FALSE)
+			{
+				switch((int)wParam)
+				{
+					case VK_UP:
+						move(UP);
+					break;
+					case VK_DOWN:
+						move(DOWN);
+					break;
+					case VK_RIGHT:
+						move(RIGHT);
+					break;
+					case VK_LEFT:
+						move(LEFT);
+					break;
+				}
+				SendMessage(hWnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
+			}
 		break;
 		case WM_CLOSE:
 			ExitProcess(0);
