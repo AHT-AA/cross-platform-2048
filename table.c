@@ -1,9 +1,9 @@
 /*
 	Name: table.c
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 01.10.2022 18.19
-	Modify date: 01.10.2022 18.19
+	Modify date: 15.10.2022 21.49
 	Description: game table functions of 2048
 */
 

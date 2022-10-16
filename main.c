@@ -1,9 +1,9 @@
 /*
 	Name: main.c
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 25.09.2022 20.56
-	Modify date: 26.09.2022 05.45
+	Modify date: 15.10.2022 21.49
 	Description: 2048 game
 */
 #include "main.h"

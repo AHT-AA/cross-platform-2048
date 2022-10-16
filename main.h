@@ -1,9 +1,9 @@
 /*
 	Name: main.h
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 26.09.2022 05.46
-	Modify date: 26.09.2022 05.46
+	Modify date: 15.10.2022 21.49
 	Description: 2048 game header
 */
 
@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 #ifdef __unix__
 		#include <unistd.h>
 		#include <errno.h>
@@ -97,10 +98,13 @@ extern unsigned size;
 #if defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
 
 #define BACKGROUND_COLOR (RGB(0, 0, 128))
+#define MAX_CHILD_WINDOWS 100
 
 extern unsigned X, Y;
 extern HWND hWnd;
+extern HWND hChildWnd[MAX_CHILD_WINDOWS];
 extern HFONT hFont;
+extern BOOL GameOver;
 #endif
 
 /* Function prototypes */

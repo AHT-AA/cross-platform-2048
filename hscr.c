@@ -1,9 +1,9 @@
 /*
 	Name: hscr.c
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 02.10.2022 13.54
-	Modify date: 02.10.2022 13.54
+	Modify date: 15.10.2022 21.48
 	Description: High score functions of 2048
 */
 
@@ -16,7 +16,8 @@ int is_hscr(void)
 {
 	if(get_hscr() == NULL)
 		return 1;
-	queue_hscr();
+	if(queue_hscr() == NULL)
+		return 0;
 	if((hscr_number < HSCR_NUMBER) || get_biggest() > hscr[HSCR_NUMBER-1]->record)
 		return 1;
 	return 0;
@@ -27,7 +28,7 @@ HIGHSCORE **queue_hscr(void) /* sirala nin ingilizcesi ne dayi */
 	unsigned i = 0, k = 0;
 	if(hscr == NULL)
 		return NULL;
-	if(hscr_number == 1) /* No need to loop */
+	if(hscr_number == 1 || hscr_number == 0)
 		return hscr;
 	for(i = 0; i < hscr_number-1; i++)
 	{
@@ -50,16 +51,28 @@ HIGHSCORE **get_hscr(void)
 	FILE *f;
 	int i = 0;
 
-	hscr_number = get_line_of_file(HSCR_FILENAME)+1; /* highscore number that found in file */
-
-	if(hscr != NULL)
-		DeleteArray((void**) hscr, hscr_number, sizeof(HIGHSCORE));
-	hscr = (HIGHSCORE**) CreateArray(hscr_number, sizeof(HIGHSCORE)); /* Create an array element number: line number of file, size of element is size of HIGHSCORE data type */
-
-	if((f = fopen(HSCR_FILENAME, "rb")) == NULL || hscr == NULL) /* If file is not exist then it is highscore */
+	if((f = fopen(HSCR_FILENAME, "rb")) == NULL) /* If file is not exist then it is highscore */
 	{
 		return NULL;
 	}
+
+	if(hscr != NULL)
+	{
+		int i = 0;
+		for(i = 0; i < hscr_number+1; i++)
+			free(hscr[i]);
+		free(hscr);
+		hscr = NULL;
+	}
+
+	hscr_number = get_line_of_file(HSCR_FILENAME); /* highscore number that found in file */
+	hscr = (HIGHSCORE**) CreateArray(hscr_number+1, sizeof(HIGHSCORE)); /* Create an array element number: line number of file, size of element is size of HIGHSCORE data type */
+
+	if(hscr == NULL)
+	{
+		game_exit("Not enought memory.");
+	}
+
 	i = 0;
 	while(feof(f) == 0)
 	{

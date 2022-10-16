@@ -1,9 +1,9 @@
 /*
 	Name: internal.c
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 01.10.2022 18.22
-	Modify date: 01.10.2022 18.22
+	Modify date: 15.10.2022 21.48
 	Description: Internal functions of 2048
 */
 

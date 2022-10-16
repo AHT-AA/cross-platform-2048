@@ -1,9 +1,9 @@
 /*
 	Name: game.c
 	Copyright: All Rights Free.
-	Author: AHT
+	Author: AHT-AA
 	Created date: 01.10.2022 18.10
-	Modify date: 01.10.2022 18.10
+	Modify date: 15.10.2022 21.48
 	Description: game functions of 2048
 */
 
@@ -102,13 +102,32 @@ void is_gameover(void)
 					is_find = 1;
 			}
 		}
+		for(y = 0; y < size-1; y++) /* last column */
+		{
+			if(game_table[size-1][y] == game_table[size-1][y+1])
+				is_find = 1;
+		}
+		for(x = 0; x < size-1; x++) /* last row */
+		{
+			if(game_table[x][size-1] == game_table[x+1][size-1])
+				is_find = 1;
+		}
 	}
 	if(is_find == 0)
 	{
+		#if ( __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64)
+			SetWindowLong(hChildWnd[0], GWL_STYLE, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_DISABLED); /* Disable save game because game over! */
+			GameOver = TRUE;
+		#endif
 		if(is_hscr() != 0)
 			put_hscr();
 		#if !( __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64)
-		game_exit("Game over BYE!");
+			game_exit("Game over BYE!");
+		#else
+			else /* If score is not highscore */
+			{
+				MessageBox(hWnd, "Game over!", "2048", MB_OK | MB_ICONINFORMATION);
+			}
 		#endif
 	}
 }
