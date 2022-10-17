@@ -176,10 +176,8 @@ unsigned long get_random(void)
 		nanoseconds *= ++i;
 		return nanoseconds;
 	#elif defined __WINDOWS__ || defined __WIN32__ || defined __WIN64__ || defined WIN32 || defined WIN64
-		static unsigned long i = 0;
 		SYSTEMTIME st;
 		GetSystemTime(&st);
-		st.wMilliseconds += ++i;
 		return st.wMilliseconds + st.wSecond;
 	#endif
 }

@@ -138,7 +138,7 @@ void create_random(void)
 
 	while(is_find == 0) /* If it is not empty try another */
 	{
-		x = get_random() % size, y = get_random() % size;
+		x = get_random() % size, y = get_random() / size % size;
 		if(game_table[x][y] == 0)
 		{
 			is_find = 1;
