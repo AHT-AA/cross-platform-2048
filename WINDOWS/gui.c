@@ -26,10 +26,10 @@ const unsigned BlockSize[7] = {140, 110, 85, 72, 60, 55, 50}; /* BlockSize[size-
 
 const COLORREF BlockColors[20] =
 {
-	RGB(0x00, 0x96, 0xFF),
+	RGB(0xFF, 0x00, 0xFF),
 	RGB(0xF1, 0x55, 0xa4),
 	RGB(0x00, 0x32, 0xc3),
-	RGB(0x00, 0xcf, 0xff),
+	RGB(0x70, 0xcf, 0xff),
 	RGB(0xff, 0xbf, 0x00),
 	RGB(0xcd, 0x42, 0xf8),
 	RGB(0x00, 0xd4, 0xff),
@@ -89,7 +89,7 @@ VOID (*MainMenuButton[3 /* Main menu button number */]) (VOID) = {LoadGame, Show
 VOID SaveGame(VOID)
 {
 	int i, k;
-	FILE *f = fopen(SAVEGAME_FILENAME, "w");
+	FILE *f = fopen(SAVEGAME_FILENAME, "wb");
 	if(f == NULL)
 	{
 		MessageBox(hWnd, "Game can't save", strerror(errno), MB_OK | MB_ICONERROR);
@@ -106,45 +106,49 @@ VOID SaveGame(VOID)
 	}
 	fprintf(f, " ");
 	fclose(f);
+	MessageBox(hWnd, "Game saved", "Information", MB_OK | MB_ICONINFORMATION);
 }
 
 VOID LoadGame(VOID)
 {
-	int i, k;
-	unsigned file_size = get_byte_of_file(SAVEGAME_FILENAME);
-	char *buff = (char*) calloc(sizeof(char), file_size);
-	FILE *f = fopen(SAVEGAME_FILENAME, "r");
+	if(MessageBox(hWnd, "Are you sure to loading game?", "Question", MB_YESNO | MB_ICONQUESTION | MB_SYSTEMMODAL) == IDYES)
+	{
+		int i, k;
+		FILE *f = fopen(SAVEGAME_FILENAME, "rb");
+		char buff[64];
 
-	if(f == NULL || buff == NULL)
-	{
-		MessageBox(hWnd, "Game can't load", strerror(errno), MB_OK | MB_ICONERROR);
-		return ;
-	}
-	fgets(buff, file_size, f);
-	fclose(f);
-	if(strncmp(buff, SAVEGAME_FILEHEADER, 11) != 0)
-	{
-		MessageBox(hWnd, "Save file header is invalid.", "Error", MB_OK | MB_ICONERROR);
-		return ;
-	}
-	if(game_table != NULL)
-		delete_game_table(); /* clear memory */
-	sscanf(buff+12, "%d", &size);
-	create_game_table();
-	for(i = 0; i < size; i++)
-	{
-		for(k = 0; k < size; k++)
+		if(f == NULL || buff == NULL)
 		{
-			sscanf(buff+14+(k*2)+(i*2*size), "%lu", &game_table[i][k]);
+			MessageBox(hWnd, "Game can't load", strerror(errno), MB_OK | MB_ICONERROR);
+			return ;
 		}
+		fgets(buff, strlen(SAVEGAME_FILEHEADER)+1, f);
+
+		if(strncmp(buff, SAVEGAME_FILEHEADER, strlen(SAVEGAME_FILEHEADER)+1) != 0)
+		{
+			MessageBox(hWnd, "Save file header is invalid.", "Error", MB_OK | MB_ICONERROR);
+			return ;
+		}
+		if(game_table != NULL)
+			delete_game_table(); /* clear memory */
+		fscanf(f, "%d", &size);
+		create_game_table();
+		for(i = 0; i < size; i++)
+		{
+			for(k = 0; k < size; k++)
+			{
+				fscanf(f, "%lu", &game_table[i][k]);
+			}
+		}
+		fclose(f);
+		if(ActiveMenu != 1)
+		{
+			ActiveMenu = 1;
+		}
+		ClearScreen();
+		SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
+		SendMessage(hWnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
 	}
-	if(ActiveMenu != 1)
-	{
-		ActiveMenu = 1;
-	}
-	ClearScreen();
-	SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
-	SendMessage(hWnd, WM_PAINT, (WPARAM) 0, (LPARAM) 0);
 }
 
 VOID ShowHighScore(VOID)
@@ -169,10 +173,13 @@ VOID ShowHighScore(VOID)
 
 VOID Restart(VOID)
 {
-	delete_game_table();
-	create_game_table();
-	create_random();
-	SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
+	if(MessageBox(hWnd, "Are you sure to restart the game?", "Question", MB_YESNO | MB_ICONQUESTION | MB_SYSTEMMODAL) == IDYES)
+	{
+		delete_game_table();
+		create_game_table();
+		create_random();
+		SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
+	}
 }
 
 VOID PutHighScore(VOID)
@@ -186,10 +193,13 @@ VOID PutHighScore(VOID)
 
 VOID ReturnMainMenu(VOID)
 {
-	ClearChildWindows();
-	delete_game_table();
-	ActiveMenu = 0;
-	SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
+	if(MessageBox(hWnd, "Are you sure to return main menu?", "Question", MB_YESNO | MB_ICONQUESTION | MB_SYSTEMMODAL) == IDYES)
+	{
+		ClearChildWindows();
+		delete_game_table();
+		ActiveMenu = 0;
+		SendMessage(hWnd, WM_CREATE, (WPARAM) 0, (LPARAM) 0);
+	}
 }
 
 VOID NewGame(VOID)
@@ -211,7 +221,7 @@ VOID DrawBlocks(VOID)
 	for(x = 0; x < size; x++)
 		for(y = 0; y < size; y++)
 		{
-			HBRUSH hBrush = game_table[x][y] == 0 ? CreateSolidBrush(RGB(128, 128, 128)) : CreateSolidBrush(BlockColors[(int)log2(game_table[x][y]) % 20]);
+			HBRUSH hBrush = game_table[x][y] == 0 ? CreateSolidBrush(RGB(128, 128, 128)) : CreateSolidBrush(BlockColors[((int)log2(game_table[x][y])-1) % 20]);
 			SelectObject(hDc, hBrush);
 
 			Rectangle(hDc, BlckSz*x, BlckSz*y, BlckSz*(x+1), BlckSz*(y+1));
@@ -220,7 +230,7 @@ VOID DrawBlocks(VOID)
 
 			if(game_table[x][y] != 0)
 			{
-				__putnumb(BlckSz*x + (BlckSz/2 - find_digit_number(game_table[x][y])*4 - 3 ), BlckSz*y + (BlckSz-21)/2, (INT) game_table[x][y], RGB(255, 255, 255), BlockColors[(int)log2(game_table[x][y]) % 20]);
+				__putnumb(BlckSz*x + (BlckSz/2 - find_digit_number(game_table[x][y])*4 - 3 ), BlckSz*y + (BlckSz-21)/2, (INT) game_table[x][y], RGB(255, 255, 255), BlockColors[((int)log2(game_table[x][y])-1) % 20]);
 			}
 		}
 
