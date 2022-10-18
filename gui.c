@@ -89,7 +89,7 @@ VOID (*MainMenuButton[3 /* Main menu button number */]) (VOID) = {LoadGame, Show
 VOID SaveGame(VOID)
 {
 	int i, k;
-	FILE *f = fopen(SAVEGAME_FILENAME, "w");
+	FILE *f = fopen(SAVEGAME_FILENAME, "wb");
 	if(f == NULL)
 	{
 		MessageBox(hWnd, "Game can't save", strerror(errno), MB_OK | MB_ICONERROR);
@@ -114,33 +114,33 @@ VOID LoadGame(VOID)
 	if(MessageBox(hWnd, "Are you sure to loading game?", "Question", MB_YESNO | MB_ICONQUESTION | MB_SYSTEMMODAL) == IDYES)
 	{
 		int i, k;
-		unsigned file_size = get_byte_of_file(SAVEGAME_FILENAME);
-		char *buff = (char*) calloc(sizeof(char), file_size);
-		FILE *f = fopen(SAVEGAME_FILENAME, "r");
+		FILE *f = fopen(SAVEGAME_FILENAME, "rb");
+		char buff[64];
 
 		if(f == NULL || buff == NULL)
 		{
 			MessageBox(hWnd, "Game can't load", strerror(errno), MB_OK | MB_ICONERROR);
 			return ;
 		}
-		fgets(buff, file_size, f);
-		fclose(f);
-		if(strncmp(buff, SAVEGAME_FILEHEADER, 11) != 0)
+		fgets(buff, strlen(SAVEGAME_FILEHEADER)+1, f);
+
+		if(strncmp(buff, SAVEGAME_FILEHEADER, strlen(SAVEGAME_FILEHEADER)+1) != 0)
 		{
 			MessageBox(hWnd, "Save file header is invalid.", "Error", MB_OK | MB_ICONERROR);
 			return ;
 		}
 		if(game_table != NULL)
 			delete_game_table(); /* clear memory */
-		sscanf(buff+12, "%d", &size);
+		fscanf(f, "%d", &size);
 		create_game_table();
 		for(i = 0; i < size; i++)
 		{
 			for(k = 0; k < size; k++)
 			{
-				sscanf(buff+14+(k*2)+(i*2*size), "%lu", &game_table[i][k]);
+				fscanf(f, "%lu", &game_table[i][k]);
 			}
 		}
+		fclose(f);
 		if(ActiveMenu != 1)
 		{
 			ActiveMenu = 1;
