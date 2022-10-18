@@ -36,34 +36,35 @@ void save_game(void)
 void load_game(void)
 {
 	int i, k;
-	unsigned file_size = get_byte_of_file(SAVEGAME_FILENAME);
-	char *buff = (char*) calloc(sizeof(char), file_size);
+	char buff[64];
 	FILE *f = fopen(SAVEGAME_FILENAME, "r");
 
-	if(f == NULL || buff == NULL)
+	if(f == NULL)
 	{
 		printf("\nGame can't load! Press any key to continue game . . .\n");
 		getch();
 		return ;
 	}
-	fgets(buff, file_size, f);
-	fclose(f);
-	if(strncmp(buff, SAVEGAME_FILEHEADER, 11) != 0)
+
+	fgets(buff, strlen(SAVEGAME_FILEHEADER)+1, f);
+	if(strncmp(buff, SAVEGAME_FILEHEADER, strlen(SAVEGAME_FILEHEADER)+1) != 0)
 	{
 		printf("\nSave file header is invalid. Press any key to continue . . .\n");
 		getch();
 		return ;
 	}
-	sscanf(buff+12, "%d", &size);
-	delete_game_table(); /* clear memory */
+	if(game_table != NULL)
+		delete_game_table(); /* clear memory */
+	fscanf(f, "%d", &size);
 	create_game_table();
 	for(i = 0; i < size; i++)
 	{
 		for(k = 0; k < size; k++)
 		{
-			sscanf(buff+14+(k*2)+(i*2*size), "%lu", &game_table[i][k]);
+			fscanf(f, "%lu", &game_table[i][k]);
 		}
 	}
+	fclose(f);
 }
 
 unsigned long get_biggest(void) /* biggest number of game_table[][] */
